@@ -12,9 +12,9 @@ const generateJSDoc = () => {
     // Get texts of the selection or current line content if no selection
     const selectionText = editor.document.getText(selection) || text;
     const getParamReg = /\(([^)]*)\)/;
-
+	const getFuncReg = /\s*([a-z0-9_]+)/;
     const isClass = /class/i.test(selectionText);
-    
+
     if (isClass) {
         editor.edit(editBuilder => {
             // Insert text above current line
@@ -37,6 +37,8 @@ const generateJSDoc = () => {
     }
     const paramList = m[1].replace(/[\t\s\r]/g, '').split(',').filter(s => s !== '');
 
+	const mf = selectionText.match(getFuncReg) ;
+
     let jsdocExist = editor.selection.active.line > 0 ? editor.document.lineAt(editor.selection.active.line - 1).text.indexOf(' */') !== -1 : false;
     let _line = editor.selection.active.line - 2;
     if(jsdocExist){
@@ -55,7 +57,8 @@ const generateJSDoc = () => {
         const selectionLine = editor.document.lineAt(selection.start.line);
         const insertPosition = selectionLine.range.start;
         let text = '/**\r';
-        text += `* Description\r`;
+		let funcname = mf;
+        text += `* {${funcname}} - Description\r`;
         // Parameters
         text += paramList
             .map(param => {
@@ -63,14 +66,14 @@ const generateJSDoc = () => {
                 if (param.split(":").length === 2) {
                     let paramName = param.split(":")[0].trim();
                     let paramType = param.split(":")[1].trim();
-                    return `* @param {${paramType}} ${paramName}\r`;
+                    return `* @${paramName}:\r`;
                 }
-                return `* @param {any} ${param}\r`;
+                return `* @${param}:\r`;
             })
             .join('');
         // return value
         if (!/constructor/i.test(selectionText)) {
-            text += `* @returns {any}\r`;
+            text += `* Return: \r`;
         }
         text += `*/\r`;
 
